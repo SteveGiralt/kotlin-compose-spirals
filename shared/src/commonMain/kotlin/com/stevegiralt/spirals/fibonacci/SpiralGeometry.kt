@@ -122,17 +122,33 @@ object SpiralGeometry {
     /**
      * Determines if the spiral should be rotated 90° to better fit the canvas.
      *
-     * NOTE: Rotation is currently disabled because rotating individual corner
-     * positions breaks the edge-sharing relationship between squares.
-     * A proper implementation would need to recalculate positions after rotation.
+     * Compares the scale factor achievable with and without rotation.
+     * Rotation is recommended if it provides significantly better space utilization.
+     *
+     * Note: The rotation is applied at the canvas level, not to positions.
      *
      * @param bbox Bounding box of the unscaled spiral
      * @param canvasSize Dimensions of the canvas/screen
-     * @return true if rotation would improve space utilization
+     * @param allowRotation Whether rotation is allowed (platform-specific)
+     * @return true if rotation would improve space utilization by >5%
      */
-    fun shouldRotate(bbox: BoundingBox, canvasSize: CanvasSize): Boolean {
-        // Rotation disabled - breaks square alignment
-        return false
+    fun shouldRotate(bbox: BoundingBox, canvasSize: CanvasSize, allowRotation: Boolean = false): Boolean {
+        if (!allowRotation) return false
+
+        // Calculate scale without rotation
+        val scaleNormal = calculateScale(bbox, canvasSize)
+
+        // Calculate scale with rotation (swap bbox width/height)
+        val rotatedBbox = BoundingBox(
+            minX = -bbox.maxY,
+            minY = bbox.minX,
+            maxX = -bbox.minY,
+            maxY = bbox.maxX
+        )
+        val scaleRotated = calculateScale(rotatedBbox, canvasSize)
+
+        // Rotate if it provides >5% better scale
+        return scaleRotated > scaleNormal * 1.05f
     }
 
     /**
@@ -152,13 +168,15 @@ object SpiralGeometry {
      * @param sizes Unscaled sizes of squares
      * @param n Number of Fibonacci squares (for diagnostics)
      * @param canvasSize Dimensions of the canvas/screen
+     * @param allowRotation Whether rotation is allowed (platform-specific, e.g. Android only)
      * @return ScalingResult with transformed positions, sizes, and diagnostics
      */
     fun scaleAndCenter(
         positions: List<Position>,
         sizes: List<Float>,
         n: Int,
-        canvasSize: CanvasSize
+        canvasSize: CanvasSize,
+        allowRotation: Boolean = false
     ): ScalingResult {
         require(positions.isNotEmpty()) { "Cannot scale empty spiral" }
         require(positions.size == sizes.size) { "Positions and sizes must match" }
@@ -167,27 +185,21 @@ object SpiralGeometry {
         val unscaledBbox = calculateBoundingBox(positions, sizes)
 
         // Step 2: Determine if rotation improves space utilization
-        val rotate = shouldRotate(unscaledBbox, canvasSize)
+        val rotate = shouldRotate(unscaledBbox, canvasSize, allowRotation)
 
-        // Step 3: Rotate positions if beneficial (90° counter-clockwise: x' = -y, y' = x)
-        val transformedPositions = if (rotate) {
-            positions.map { pos -> Position(-pos.y, pos.x) }
+        // Step 3: If rotating, use swapped canvas dimensions for scaling
+        // (we'll apply actual rotation at canvas level, not to positions)
+        val effectiveCanvasSize = if (rotate) {
+            CanvasSize(canvasSize.height, canvasSize.width)  // Swap width/height
         } else {
-            positions
+            canvasSize
         }
 
-        // Recalculate bbox after rotation
-        val transformedBbox = if (rotate) {
-            calculateBoundingBox(transformedPositions, sizes)
-        } else {
-            unscaledBbox
-        }
-
-        // Step 4: Calculate scale factor
-        val scale = calculateScale(transformedBbox, canvasSize)
+        // Step 4: Calculate scale factor using effective canvas size
+        val scale = calculateScale(unscaledBbox, effectiveCanvasSize)
 
         // Step 5: Scale everything
-        val scaledPositions = transformedPositions.map { it * scale }
+        val scaledPositions = positions.map { it * scale }
         val scaledSizes = sizes.map { it * scale }
 
         // Step 6: Recalculate scaled bounding box

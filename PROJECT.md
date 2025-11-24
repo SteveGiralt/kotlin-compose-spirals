@@ -1541,6 +1541,68 @@ composeApp/src/commonMain/kotlin/com/stevegiralt/spirals/ui/
 
 ---
 
-**Document Version:** 1.9
+### Session 7 - Android-Only Smart Rotation Fix (2025-11-24)
+**Completed:**
+- ✓ Re-enabled smart rotation for Android platform only
+- ✓ Fixed rotation implementation to use canvas-level transform instead of position rotation
+- ✓ Added platform detection via expect/actual pattern
+- ✓ Counter-rotated text labels so they appear upright when canvas is rotated
+- ✓ 56/56 tests passing (added new test for rotation disabled by default)
+
+**Problem Identified:**
+The previous rotation implementation rotated individual square positions, which broke the edge-sharing relationship between squares. Squares appeared misaligned when rotation was enabled.
+
+**Solutions Implemented:**
+
+1. **Platform-Specific Rotation Control**
+   - Created `expect val allowSpiralRotation: Boolean` in commonMain
+   - Android: `actual val allowSpiralRotation = true`
+   - Desktop/Web: `actual val allowSpiralRotation = false`
+   - Note: Used top-level `val` instead of `object` to avoid Kotlin Multiplatform compatibility issues
+
+2. **Canvas-Level Rotation (not position rotation)**
+   - Previous approach: Rotate positions with `Position(-pos.y, pos.x)` - BROKEN
+   - New approach: Keep positions unchanged, apply `withTransform { rotate(-90°) }` to entire canvas
+   - Scale calculation uses swapped canvas dimensions when rotation is needed
+   - All drawing operations rotate together, preserving square alignment
+
+3. **Upright Text Labels**
+   - When canvas is rotated, text labels are counter-rotated 90° CW
+   - Each label rotates around its square's center
+   - Labels remain readable regardless of canvas rotation
+
+**Key Technical Insight:**
+Rotating corner positions doesn't work because the "bottom-left" anchor point of each square changes meaning after rotation. Canvas-level rotation preserves all spatial relationships.
+
+**Files Created:**
+```
+composeApp/src/commonMain/kotlin/com/stevegiralt/spirals/Platform.kt (expect declaration)
+composeApp/src/androidMain/kotlin/com/stevegiralt/spirals/Platform.kt (actual: true)
+composeApp/src/jvmMain/kotlin/com/stevegiralt/spirals/Platform.kt (actual: false)
+composeApp/src/webMain/kotlin/com/stevegiralt/spirals/Platform.kt (actual: false)
+```
+
+**Files Modified:**
+```
+shared/src/commonMain/kotlin/com/stevegiralt/spirals/fibonacci/SpiralGeometry.kt
+├── shouldRotate() now takes allowRotation parameter (default false)
+├── scaleAndCenter() passes allowRotation, uses swapped canvas dimensions instead of rotating positions
+
+shared/src/commonTest/kotlin/com/stevegiralt/spirals/fibonacci/SpiralGeometryTest.kt
+├── Updated rotation tests to pass allowRotation=true
+├── Added testShouldRotate_disabledByDefault()
+
+composeApp/src/commonMain/kotlin/com/stevegiralt/spirals/ui/SpiralCanvas.kt
+├── Added withTransform { rotate(-90°) } wrapper for all drawing when rotated
+├── Counter-rotate text labels with withTransform { rotate(90°) } per label
+├── Removed old heading adjustment that was compensating for broken position rotation
+```
+
+**Status:** Android rotation working correctly with proper square alignment and upright labels
+**Next Session:** Web platform fixes or additional polish
+
+---
+
+**Document Version:** 2.0
 **Last Updated:** 2025-11-24
-**Status:** Phase 6 Partial Complete (Desktop + Android working with optimized canvas layout)
+**Status:** Phase 6 Partial Complete (Desktop + Android working with smart rotation on Android)

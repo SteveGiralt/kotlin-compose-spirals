@@ -249,11 +249,11 @@ class SpiralGeometryTest {
 
     @Test
     fun testShouldRotate_tallCanvasWithWideSpiral() {
-        // Portrait canvas with landscape spiral should rotate
+        // Portrait canvas with landscape spiral should rotate (when rotation allowed)
         val wideBbox = BoundingBox(0f, 0f, 100f, 50f) // 2:1 aspect (wide)
         val tallCanvas = CanvasSize(400f, 800f) // 1:2 aspect (tall)
 
-        val shouldRotate = SpiralGeometry.shouldRotate(wideBbox, tallCanvas)
+        val shouldRotate = SpiralGeometry.shouldRotate(wideBbox, tallCanvas, allowRotation = true)
         assertTrue(shouldRotate, "Wide spiral should rotate to fit tall canvas")
     }
 
@@ -263,8 +263,18 @@ class SpiralGeometryTest {
         val bbox = BoundingBox(0f, 0f, 100f, 150f) // ~2:3 aspect
         val canvas = CanvasSize(400f, 600f) // 2:3 aspect
 
-        val shouldRotate = SpiralGeometry.shouldRotate(bbox, canvas)
+        val shouldRotate = SpiralGeometry.shouldRotate(bbox, canvas, allowRotation = true)
         // Should not rotate since aspects are similar
         assertTrue(!shouldRotate, "Matching aspects should not rotate")
+    }
+
+    @Test
+    fun testShouldRotate_disabledByDefault() {
+        // When allowRotation is false (default), should never rotate
+        val wideBbox = BoundingBox(0f, 0f, 100f, 50f) // 2:1 aspect (wide)
+        val tallCanvas = CanvasSize(400f, 800f) // 1:2 aspect (tall)
+
+        val shouldRotate = SpiralGeometry.shouldRotate(wideBbox, tallCanvas) // default allowRotation = false
+        assertTrue(!shouldRotate, "Should not rotate when allowRotation is false")
     }
 }

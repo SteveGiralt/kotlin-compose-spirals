@@ -11,13 +11,12 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.sp
+import com.stevegiralt.spirals.allowSpiralRotation
 import com.stevegiralt.spirals.fibonacci.*
 import kotlin.math.PI
 import kotlin.math.atan2
@@ -101,7 +100,8 @@ fun SpiralCanvas(
             positions = spiralData.positions,
             sizes = spiralData.sizes,
             n = n,
-            canvasSize = canvasSize
+            canvasSize = canvasSize,
+            allowRotation = allowSpiralRotation
         )
 
         // Transform to canvas coordinates
@@ -136,6 +136,12 @@ fun SpiralCanvas(
 
         val visibleSquareCount = (n * squarePhaseProgress).toInt().coerceIn(0, n)
 
+        // Apply canvas rotation if needed (rotate 90° CCW around canvas center)
+        withTransform({
+            if (scalingResult.rotated) {
+                rotate(degrees = -90f, pivot = Offset(size.width / 2, size.height / 2))
+            }
+        }) {
         // 1. Draw squares with color cycling (show all during spiral phase)
         canvasPositions.take(visibleSquareCount).forEachIndexed { index, pos ->
             val scaledSize = scalingResult.sizes[index]
@@ -174,15 +180,31 @@ fun SpiralCanvas(
 
             // Center the text in the square (accounting for bottom-left to top-left conversion)
             val squareTopLeft = Offset(pos.x, pos.y - scaledSize)
+            val squareCenter = Offset(
+                x = squareTopLeft.x + scaledSize / 2,
+                y = squareTopLeft.y + scaledSize / 2
+            )
             val textOffset = Offset(
                 x = squareTopLeft.x + (scaledSize - textLayoutResult.size.width) / 2,
                 y = squareTopLeft.y + (scaledSize - textLayoutResult.size.height) / 2
             )
 
-            drawText(
-                textLayoutResult = textLayoutResult,
-                topLeft = textOffset
-            )
+            // Counter-rotate text when canvas is rotated so labels appear upright
+            if (scalingResult.rotated) {
+                withTransform({
+                    rotate(degrees = 90f, pivot = squareCenter)
+                }) {
+                    drawText(
+                        textLayoutResult = textLayoutResult,
+                        topLeft = textOffset
+                    )
+                }
+            } else {
+                drawText(
+                    textLayoutResult = textLayoutResult,
+                    topLeft = textOffset
+                )
+            }
         }
 
         // 3. Draw spiral arc - draws smoothly during phase 2
@@ -191,8 +213,8 @@ fun SpiralCanvas(
                 // Start at centered origin
                 var currentX = centeringOffset.x
                 var currentY = centeringOffset.y
-                // If spiral was rotated 90° CCW, initial heading also rotates 90° CCW
-                var currentHeading = if (scalingResult.rotated) 90f else 0f
+                // Initial heading is 0 (facing right)
+                var currentHeading = 0f
 
                 val startCanvas = toCanvasCoords(Position(currentX, currentY), size)
                 moveTo(startCanvas.x, startCanvas.y)
@@ -286,6 +308,7 @@ fun SpiralCanvas(
             color = SpiralColors.SPIRAL_COLOR,
             style = Stroke(width = 3f)
         )
+        } // end withTransform
     }
 }
 
