@@ -31,18 +31,18 @@ Or open the project in Android Studio and use the run button.
 ### Web (WebAssembly)
 
 ```shell
-./gradlew :composeApp:wasmJsBrowserDevelopmentRun
+./gradlew :composeApp:wasmJsBrowserDevelopmentRun --continuous
 ```
 
-Opens in your default browser. Requires a modern browser with WebAssembly support (Chrome, Firefox, Safari, Edge).
+Then open http://localhost:8080/ in your browser. The `--continuous` flag keeps the dev server running and watches for file changes. Requires a modern browser with WebAssembly support (Chrome, Firefox, Safari, Edge).
 
 ### Web (JavaScript Fallback)
 
 ```shell
-./gradlew :composeApp:jsBrowserDevelopmentRun
+./gradlew :composeApp:jsBrowserDevelopmentRun --continuous
 ```
 
-Use this for older browsers without full Wasm support.
+Then open http://localhost:8080/. Use this for older browsers without full Wasm support.
 
 ## Project Structure
 
