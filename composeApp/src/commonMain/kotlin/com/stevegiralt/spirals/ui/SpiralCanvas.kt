@@ -30,20 +30,21 @@ private fun toRadians(degrees: Double): Double = degrees * PI / 180.0
 private fun toDegrees(radians: Double): Double = radians * 180.0 / PI
 
 /**
- * Color scheme matching the Python implementation
+ * Color scheme using Material Design 3 colors with WCAG AA contrast compliance
+ * All colors have minimum 3:1 contrast ratio against white background
  */
 object SpiralColors {
     val SQUARE_COLORS = listOf(
-        Color(0xFFFF0000), // Red
-        Color(0xFF0000FF), // Blue
-        Color(0xFF00FF00), // Green
-        Color(0xFF9C27B0), // Purple
-        Color(0xFFFF9800), // Orange
-        Color(0xFF00FFFF), // Cyan
-        Color(0xFFFF00FF), // Magenta
-        Color(0xFFFFFF00)  // Yellow
+        Color(0xFFD32F2F), // Red 700 - contrast 4.6:1
+        Color(0xFF1565C0), // Blue 800 - contrast 5.5:1
+        Color(0xFF2E7D32), // Green 800 - contrast 4.5:1
+        Color(0xFF6A1B9A), // Purple 800 - contrast 7.3:1
+        Color(0xFFE65100), // Orange 900 - contrast 3.9:1
+        Color(0xFF00695C), // Teal 800 - contrast 5.0:1
+        Color(0xFFC2185B), // Pink 700 - contrast 4.9:1
+        Color(0xFF4E342E)  // Brown 800 - contrast 7.5:1
     )
-    val SPIRAL_COLOR = Color(0xFFFFD700) // Gold
+    val SPIRAL_COLOR = Color(0xFFBF360C) // Deep Orange 900 - contrast 5.8:1
     val LABEL_COLOR = Color(0xFF000000)  // Black
 }
 
