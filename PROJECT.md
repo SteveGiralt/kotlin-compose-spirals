@@ -1603,6 +1603,27 @@ composeApp/src/commonMain/kotlin/com/stevegiralt/spirals/ui/SpiralCanvas.kt
 
 ---
 
-**Document Version:** 2.0
+### Session 8 - Web Platform: Enable Smart Rotation (2025-11-24)
+**Completed:**
+- ✓ Enabled automatic canvas rotation on web platform
+
+**Change Made:**
+- Updated `composeApp/src/webMain/kotlin/com/stevegiralt/spirals/Platform.kt`
+- Changed `allowSpiralRotation` from `false` to `true`
+
+**Rationale:**
+The smart rotation feature was previously disabled on web due to concerns about resizable windows. However, the rotation logic already handles dynamic canvas sizes properly - it recalculates whether rotation is beneficial on each recomposition. Enabling it on web provides the same space optimization benefits as on Android.
+
+**Files Modified:**
+```
+composeApp/src/webMain/kotlin/com/stevegiralt/spirals/Platform.kt
+└── allowSpiralRotation: false → true
+```
+
+**Status:** Web platform now has feature parity with Android for smart rotation
+
+---
+
+**Document Version:** 2.1
 **Last Updated:** 2025-11-24
-**Status:** Phase 6 Partial Complete (Desktop + Android working with smart rotation on Android)
+**Status:** Phase 6 Complete (Desktop, Android, and Web all working with smart rotation on Android/Web)
